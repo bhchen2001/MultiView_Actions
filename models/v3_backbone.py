@@ -5,9 +5,9 @@ from einops import repeat
 
 
 class VideoTransformer(nn.Module):
-    def __init__(self, input_size, num_views, num_actions):
+    def __init__(self, num_views, num_actions):
         super(VideoTransformer, self).__init__()
-        self.input_size = input_size
+        # self.input_size = input_size
         self.num_views = num_views
         self.num_actions = num_actions
         num_frames = 16

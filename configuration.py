@@ -20,10 +20,25 @@ def build_config(dataset):
         cfg.test_annotations = 'data/PKUMMDTestCS_map.csv'
         cfg.num_actions = 51
 
-    elif dataset == 'numa':
-        cfg.videos_folder =  '/home/siddiqui/Action_Biometrics-RGB/frame_data/numa'
+    elif dataset == 'numa_cv':
+        cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/numa/processed_data'
         cfg.train_annotations = "data/NUMATrain_CV.csv"
+        cfg.val_annotations = "data/NUMAVal_CV.csv"
         cfg.test_annotations = "data/NUMATest_CV.csv"
+        cfg.num_actions = 10
+
+    elif dataset == 'numa_cs':
+        cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/numa/processed_data'
+        cfg.train_annotations = "data/NUMATrain_CS.csv"
+        cfg.val_annotations = "data/NUMAVal_CS.csv"
+        cfg.test_annotations = "data/NUMATest_CS.csv"
+        cfg.num_actions = 10
+
+    elif dataset == 'numa_view':
+        cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/numa/processed_data'
+        cfg.train_annotations = "data/NUMATrain_AllView.csv"
+        cfg.val_annotations = "data/NUMATest_AllView.csv"
+        cfg.test_annotations = "data/NUMATest_View3.csv"
         cfg.num_actions = 10
         
     else:

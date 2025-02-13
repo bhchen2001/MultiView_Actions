@@ -1,18 +1,18 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import os
 import random
 import torch
 import h5py
-import cv2
+# import cv2
 #from torch import nn, einsum
 #from einops import rearrange, repeat
 import timeit
-from decord import VideoReader, cpu
+# from decord import VideoReader, cpu
 import torch.nn.functional as F
 #from imageio import imsave
-from torchvision.utils import save_image
+# from torchvision.utils import save_image
 from torchvision.transforms import (
     CenterCrop,
     Compose,
@@ -319,14 +319,14 @@ def video_to_hp5y(setting):
             del tframes
     
     elif setting == "numa":
-        anno = pd.read_csv("NUMAMaster.csv")
-        path = "/home/c3-0/datasets/NUMA/multiview_action_videos"
+        anno = pd.read_csv("data/NUMAMaster.csv")
+        path = "/home/bhchen/action_recognition/dataset/numa/ori_data/multiview_action_videos"
         resize = Resize([270, 480])
         frames = []
         for i, row in enumerate(anno.values):
             video, subject, action, viewpoint = row
-            if os.path.exists(f'/home/siddiqui/Action_Biometrics/frame_data/numa/{video[:-4]};{action}.hdf5'):
-                print(f'/home/siddiqui/Action_Biometrics/frame_data/numa/{video[:-4]};{action}.hdf5 already exists!, {i}', flush=True)
+            if os.path.exists(f'/home/bhchen/action_recognition/dataset/numa/processed_data/{video[:-4]};{action}.hdf5'):
+                print(f'/home/bhchen/action_recognition/dataset/numa/processed_data/{video[:-4]};{action}.hdf5 already exists!, {i}', flush=True)
                 continue
             start = timeit.default_timer()
             if i % 100 == 0:
@@ -347,8 +347,8 @@ def video_to_hp5y(setting):
                 tframes = torch.stack([frame for frame in frames])
                 frames.clear()
             print(f"one video time: {timeit.default_timer() - start}, {video}", flush=True)
-            if not os.path.exists(f'/home/siddiqui/Action_Biometrics/frame_data/numa/{video[:-4]};{action}.hdf5'):
-                with h5py.File(f'/home/siddiqui/Action_Biometrics/frame_data/numa/{video[:-4]};{action}.hdf5', 'w') as f:
+            if not os.path.exists(f'/home/bhchen/action_recognition/dataset/numa/processed_data/{video[:-4]};{action}.hdf5'):
+                with h5py.File(f'/home/bhchen/action_recognition/dataset/numa/processed_data/{video[:-4]};{action}.hdf5', 'w') as f:
                         dset = f.create_dataset('default', data=tframes)
             del tframes 
             
@@ -474,11 +474,30 @@ def splitNUMA():
     
     df = pd.DataFrame(test_df_rows, columns = ['video', 'subject', 'action', 'viewpoint'])
     df.to_csv('NUMATest_CV.csv', index=False)
-        
+
+def splitNumaView(query_view):
+    # split the train and test data for single-view experiment
+    view_df_rows = []
+    train_df_rows = []
+    test_df_rows = []
+
+    for i, row in enumerate(open('./data/NUMAMaster.csv', 'r').readlines()[1:]):
+        video, subject, action, view = row.split(',')
+        if int(view) == query_view:
+            view_df_rows.append([video, subject, action, int(view)])
+    
+    df = pd.DataFrame(view_df_rows, columns = ['video', 'subject', 'action', 'viewpoint'])
+    df.to_csv(f'./data/NUMA_View{query_view}.csv', index=False)
             
             
             
 if __name__ == '__main__':
+    # transfer data to h5py
+    # video_to_hp5y('numa')
+
+    # split numa data's each view
+    # splitNumaView(3)
+    
     pd.set_option('display.max_rows', 500)
     #video_to_hp5y('ntu')
     video = 'S007C001P017R002A058_rgb.avi'

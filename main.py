@@ -2,12 +2,11 @@ import argparse
 from datetime import datetime
 import os
 import torch
-from train import train_model
+from train import train_model, test_model
 from configuration import build_config
 from tensorboardX import SummaryWriter
 import random 
 import numpy as np
-
 
 def train_classifier(run_id, use_cuda, args):
     cfg = build_config(args.dataset)
@@ -15,9 +14,24 @@ def train_classifier(run_id, use_cuda, args):
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     writer = SummaryWriter(os.path.join(cfg.tf_logs_dir, str(run_id)))
+    layout = {
+        'Multi-label Classification': {
+            'class_val_accuracy': ['Multiline', ['class_val_accuracy/class{}'.format(i) for i in range(10)]],
+        },
+    }
+
+    writer.add_custom_scalars(layout)
+
     for arg in vars(args):
         writer.add_text(arg, str(getattr(args, arg)))
     train_model(cfg, run_id, save_dir, use_cuda, args, writer)
+
+def test_classifier(load_model, use_cuda, args):
+    cfg = build_config(args.dataset)
+    load_model_path = os.path.join(cfg.saved_models_dir, load_model)
+    if not os.path.exists(load_model_path):
+        raise Exception('Model not found')
+    test_model(cfg, load_model_path, use_cuda, args)
 
 
 def main(args):
@@ -37,6 +51,12 @@ def main(args):
         torch.backends.cudnn.deterministic = True
         
         train_classifier(run_id, use_cuda, args)
+    # inference mode
+    elif args.test_classifier:
+        load_model = args.load_model
+        use_cuda = torch.cuda.is_available()
+        test_classifier(load_model, use_cuda, args)
+
 
 
 def restricted_float(x):
@@ -59,12 +79,16 @@ if __name__ == '__main__':
 
     group.add_argument('--train_classifier', dest='train_classifier', action='store_true',
                        help='Training the Classifier')
+    group.add_argument('--test_classifier', dest='test_classifier', action='store_true',
+                       help='Testing the Classifier')
+    
+    parser.add_argument('--load_model', dest='load_model', type=str, required=False, help='Path to the pre-trained model')
 
     parser.add_argument("--gpu", dest='gpu', type=str, required=False, help='Set CUDA_VISIBLE_DEVICES environment variable, optional')
 
     parser.add_argument('--run_id', dest='run_id', type=str, required=False, help='Please provide an ID for the current run')
 
-    parser.add_argument('--dataset', type=str, required=True, help='Dataset to use.', choices=["ntu_rgbd_120", 'ntu_rgbd_60', "pkummd",  'mergedntupk', 'numa'])
+    parser.add_argument('--dataset', type=str, required=True, help='Dataset to use.', choices=["ntu_rgbd_120", 'ntu_rgbd_60', "pkummd",  'mergedntupk', 'numa_cs', 'numa_cv', 'numa_view'])
 
     parser.add_argument('--model_version', type=str, required=True, help='Specify the model to use', 
                         choices=['v3'])

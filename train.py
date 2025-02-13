@@ -131,6 +131,12 @@ def train_epoch(epoch, data_loader, model, optimizer, ema_optimizer, criterion, 
             act_acc.append(acc)
            
             loss = sub_loss + act_loss + sv_contrastive_loss + sa_contrastive_loss + subqloss + actqloss
+
+            # ignore contrastive loss
+            # loss = sub_loss + act_loss + subqloss + actqloss
+
+            # ignore view loss
+            # loss = act_loss + sa_contrastive_loss + actqloss
             
             if 3 < i < 5:
                 act = torch.stack([acc for acc in act_acc])
@@ -165,8 +171,62 @@ def train_epoch(epoch, data_loader, model, optimizer, ema_optimizer, criterion, 
         act_acc = torch.sum(act) / (len(act) * args.batch_size)
         sub = torch.stack([acc for acc in sub_acc])
         sub_acc = torch.sum(sub) / (len(sub) * args.batch_size)
+    
+    else:
+        for i, (clips, labels, action_targets, keys) in enumerate(tqdm(data_loader)):
+            assert len(clips) == len(labels)
             
+            clips = Variable(clips.type(torch.FloatTensor)).cuda()
+            labels =  Variable(labels.type(torch.LongTensor)).cuda()
+            action_targets =  Variable(action_targets.type(torch.LongTensor)).cuda()
+
+            optimizer.zero_grad()
+
+            output_subjects, output_actions, features, act_features, _, _ = model(clips)
+
+            # sub_loss = criterion(output_subjects, labels)
+            act_loss = criterion(output_actions, action_targets)
+
+            # output_subjects = torch.argmax(output_subjects, dim=1)
+            # acc = torch.sum(output_subjects == labels)
+            # sub_acc.append(acc)
+
+            output_actions = torch.argmax(output_actions, dim=1)
+            acc = torch.sum(output_actions == action_targets)
+            act_acc.append(acc)
+
+            # for_single_view
+            loss = act_loss
+
+            # if 3 < i < 5:
+            #     act = torch.stack([acc for acc in act_acc])
+            #     act_acc_pred = torch.sum(act) / (len(act) * args.batch_size)
+                # sub = torch.stack([acc for acc in sub_acc])
+                # sub_acc_pred = torch.sum(sub) / (len(sub) * args.batch_size)
+                # print(f'pred sub: {output_subjects}, GT: {labels}, pred act: {output_actions}, GT: {action_targets}, features: {features.shape}', flush=True)
+
+            # supervised_sub_losses.append(sub_loss.item())
+            supervised_act_losses.append(act_loss.item())
+
+            losses.append(loss.item())
+            loss.backward()
+
+            if (i+1) % 1 == 0:
+                optimizer.step()
+                optimizer.zero_grad()
+                ema_optimizer.step()
+
+            losses.append(loss.item())
+
+            del act_loss, loss, output_subjects, output_actions, features, act_features, clips, labels, action_targets
+            
+        act = torch.stack([acc for acc in act_acc])
+        act_acc = torch.sum(act) / (len(act) * args.batch_size)
+        # sub = torch.stack([acc for acc in sub_acc])
+        # sub_acc = torch.sum(sub) / (len(sub) * args.batch_size)
+
     print('Training Epoch: %d, Loss: %.4f, SL: %.4f, AL: %.4f, SCL: %.4f, ACL: %.4f, OSL: %.4f, OAL: %.4f' % (epoch, np.mean(losses), np.mean(supervised_sub_losses),  np.mean(supervised_act_losses), np.mean(ss_contrastive_losses), np.mean(sa_contrastive_losses), np.mean(ortho_sub_losses), np.mean(ortho_act_losses)), flush=True)
+    # for_single_view
     print('Training Epoch: %d, View Accuracy: %.4f' % (epoch, sub_acc), flush=True)
     
     print('Training Epoch: %d, Action Accuracy: %.4f' % (epoch, act_acc), flush=True)
@@ -175,6 +235,7 @@ def train_epoch(epoch, data_loader, model, optimizer, ema_optimizer, criterion, 
     writer.add_scalar('Training Loss', np.mean(losses), epoch)
     writer.add_scalar('View Loss', np.mean(supervised_sub_losses), epoch)
     writer.add_scalar('Action Loss', np.mean(supervised_act_losses), epoch)
+    # for_single_view
     writer.add_scalar('View Contrastive Loss', np.mean(ss_contrastive_losses), epoch)
     writer.add_scalar('Action Contrastive Loss', np.mean(sa_contrastive_losses), epoch)
       
@@ -189,6 +250,9 @@ def val_epoch(cfg, epoch, data_loader, model, writer, use_cuda, args, action_fla
     results = {}
     act_acc = []
     sub_acc = []
+    class_correct = list(0. for i in range(cfg.num_actions))
+    class_total = list(0. for i in range(cfg.num_actions))
+
     for i, (clips, labels, action_targets, keys) in enumerate(tqdm(data_loader)):
         clips = Variable(clips.type(torch.FloatTensor))
         labels =  Variable(labels.type(torch.FloatTensor))
@@ -196,7 +260,6 @@ def val_epoch(cfg, epoch, data_loader, model, writer, use_cuda, args, action_fla
         
         assert len(clips) == len(labels)
                         
-        
         with torch.no_grad():
             if use_cuda:
                 clips = clips.cuda()
@@ -208,15 +271,19 @@ def val_epoch(cfg, epoch, data_loader, model, writer, use_cuda, args, action_fla
             output_actions = torch.argmax(output_actions, dim=1)
             acc = torch.sum(output_actions == action_targets)
             act_acc.append(acc)
+
+            for j in range(len(action_targets)):
+                label = int(action_targets[j].item())
+                pred = int(output_actions[j].item())
+                if label == pred:
+                    class_correct[label] += 1
+                class_total[label] += 1
+
             if i == 3:
-                # print(output_actions, action_targets, flush=True)
-                # print(output_subjects, labels, flush=True)
                 act_pred = torch.stack([acc for acc in act_acc])
                 act_acc_pred = torch.sum(act_pred) / (len(act_pred) * args.batch_size)
-                # print(act_acc_pred)
                 sub_pred = torch.stack([acc for acc in sub_acc])                
                 sub_acc_pred = torch.sum(sub_pred) / (len(sub_pred) * args.batch_size)
-                # print(sub_acc_pred)
             
             acc = torch.sum(output_subjects == labels)
             sub_acc.append(acc)
@@ -227,8 +294,105 @@ def val_epoch(cfg, epoch, data_loader, model, writer, use_cuda, args, action_fla
     act_acc = torch.sum(act) / (len(act) * args.batch_size)
     print('Validation Epoch: %d, Action Accuracy: %.4f' % (epoch, act_acc), flush=True)
     print('Validation Epoch: %d, View Accuracy: %.4f' % (epoch, sub_acc), flush=True)
+
+    writer.add_scalar('Validation Action Accuracy', act_acc, epoch)
+    writer.add_scalar('Validation View Accuracy', sub_acc, epoch)
+
+    for i in range(10):
+        writer.add_scalar('class_val_accuracy/class{}'.format(i), class_correct[i] / class_total[i], epoch)
+
     return act_acc
+
+def test_model(cfg, load_model_path, use_cuda, args):
+    print("Testing model")
+    transform_test = Compose(
+        [
+            Normalize([0.45, 0.45, 0.45], [0.225, 0.225, 0.225]),
+            ShortSideScale(
+                size=256
+            ),
+            CenterCrop(224)
+        ]
+    )
+    
+    flag = True if args.model_version == 'v3' else False
+    test_data_gen = omniDataLoader(cfg, 'test', 1.0, transform=transform_test, flag=False)
+    test_dataloader = DataLoader(test_data_gen, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, drop_last=False, collate_fn=val_collate)
+    
+    print("Number of testing samples : " + str(len(test_data_gen)))
+    
+    # test num_views = 1
+    # for_single_view
+    # num_views=1
+    num_views=3
+    model = build_model(args.model_version, num_views, cfg.num_actions)
+
+    # find the model under dir and load it
+    list_of_files = os.listdir(load_model_path)
+    for file in list_of_files:
+        if file.endswith('.pth'):
+            model_path = os.path.join(load_model_path, file)
+            break
+
+    pretrained_weights = torch.load(model_path)['state_dict']
+    model.load_state_dict(pretrained_weights, strict=True)
+
+    #####################################################################################################################
+    num_gpus = len(args.gpu.split(','))
+    if num_gpus > 1:
+        model = torch.nn.DataParallel(model)
+    model.cuda()
+    #####################################################################################################################
+
+    print("loaded", flush=True)
+
+    model.eval()
+
+    act_acc = []
+    sub_acc = []
+    class_correct = list(0. for i in range(cfg.num_actions))
+    class_total = list(0. for i in range(cfg.num_actions))
+    
+    for i, (clips, labels, action_targets, keys) in enumerate(tqdm(test_dataloader)):
+        clips = Variable(clips.type(torch.FloatTensor))
+        labels =  Variable(labels.type(torch.FloatTensor))
+        action_targets =  Variable(action_targets.type(torch.FloatTensor))
         
+        assert len(clips) == len(labels)
+        
+        with torch.no_grad():
+            if use_cuda:
+                clips = clips.cuda()
+                labels = labels.cuda()
+                action_targets = action_targets.cuda()
+                
+            output_subjects, output_actions, features, act_features, _, _ = model(clips)
+            output_subjects = torch.argmax(output_subjects, dim=1)
+            output_actions = torch.argmax(output_actions, dim=1)
+            acc = torch.sum(output_actions == action_targets)
+            act_acc.append(acc)
+            
+            acc = torch.sum(output_subjects == labels)
+            sub_acc.append(acc)
+
+            for j in range(len(action_targets)):
+                label = int(action_targets[j].item())
+                pred = int(output_actions[j].item())
+                if label == pred:
+                    class_correct[label] += 1
+                class_total[label] += 1
+
+    sub = torch.stack([acc for acc in sub_acc])
+    sub_acc = torch.sum(sub) / (len(sub) * args.batch_size)
+    act = torch.stack([acc for acc in act_acc])
+    act_acc = torch.sum(act) / (len(act) * args.batch_size)
+    print('Test Action Accuracy: %.4f' % act_acc, flush=True)
+    print('Test View Accuracy: %.4f' % sub_acc, flush=True)
+
+    for i in range(cfg.num_actions):
+        print('Test Accuracy of class {}: {:.4f}'.format(i, class_correct[i] / class_total[i]), flush=True)
+
+    return act_acc
     
 
 def train_model(cfg, run_id, save_dir, use_cuda, args, writer):
@@ -238,6 +402,7 @@ def train_model(cfg, run_id, save_dir, use_cuda, args, writer):
     print("Parameters used : ")
     print("batch_size: " + str(args.batch_size))
     print("lr: " + str(args.learning_rate))
+    print("num_actions: " + str(cfg.num_actions))
 
     transform_train = Compose(
         [
@@ -261,19 +426,25 @@ def train_model(cfg, run_id, save_dir, use_cuda, args, writer):
         ]
     )
     
-    flag = True if args.model_version == 'v3' else False    
+    flag = True if args.model_version == 'v3' else False 
+    # for_single_view
+    # flag = False   
     train_data_gen = omniDataLoader(cfg, 'train', transform=transform_train, flag=flag)
-    val_data_gen = omniDataLoader(cfg, 'test', 1.0, transform=transform_test, flag=False)
+    val_data_gen = omniDataLoader(cfg, 'val', 1.0, transform=transform_test, flag=False)
     
     train_dataloader = DataLoader(train_data_gen, batch_size=args.batch_size, shuffle=shuffle, num_workers=args.num_workers, drop_last=True, collate_fn=default_collate)
+    # for_single_view
+    # train_dataloader = DataLoader(train_data_gen, batch_size=args.batch_size, shuffle=shuffle, num_workers=args.num_workers, drop_last=True, collate_fn=val_collate)
     val_dataloader = DataLoader(val_data_gen, batch_size=args.batch_size, shuffle=shuffle, num_workers=args.num_workers, drop_last=False, collate_fn=val_collate)
     
     print("Number of training samples : " + str(len(train_data_gen)))
-    print("Number of testing samples : " + str(len(val_data_gen)))
+    print("Number of validating samples : " + str(len(val_data_gen)))
     
     steps_per_epoch = len(train_data_gen) / args.batch_size
     print("Steps per epoch: " + str(steps_per_epoch))
     
+    # for_single_view
+    # num_views=1
     num_views=3
     model = build_model(args.model_version, num_views, cfg.num_actions)
     
@@ -309,7 +480,7 @@ def train_model(cfg, run_id, save_dir, use_cuda, args, writer):
     for epoch in range(args.num_epochs):
         model = train_epoch(epoch, train_dataloader, model, optimizer, ema_optimizer, criterion, writer, use_cuda, flag, args)
         if epoch % args.validation_interval == 0:
-            score1 = val_epoch(cfg, epoch, val_dataloader, model, None, use_cuda, args)
+            score1 = val_epoch(cfg, epoch, val_dataloader, model, writer, use_cuda, args)
             fmap_score = score1
             if flag:
                 score2 = val_epoch(cfg, epoch, val_dataloader, ema_model, writer, use_cuda, args)

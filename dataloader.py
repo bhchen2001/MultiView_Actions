@@ -4,13 +4,13 @@ import os
 import sys
 import random
 import pandas as pd
-import cv2
+# import cv2
 import numpy as np
 import h5py
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 from configuration import build_config
 from torch.autograd.variable import Variable
@@ -78,19 +78,23 @@ class omniDataLoader(Dataset):
         self.videos_folder = cfg.videos_folder
         if data_split == "train":
            self.annotations = cfg.train_annotations
-        else:
-           self.annotations = cfg.test_annotations
+        elif data_split == "val":
+           self.annotations = cfg.val_annotations
+        elif data_split == "test":
+            self.annotations = cfg.test_annotations
         df = pd.read_csv(self.annotations)
         self.videos = []
         self.data = {}
         self.actions = []
         self.views = []
-        if self.dataset != 'ntu_rgbd_60':
-            hdf5_list = os.listdir(f'/home/siddiqui/Action_Biometrics-RGB/frame_data/{self.dataset}/')
+        if 'numa' in self.dataset:
+            hdf5_list = os.listdir(f'/home/bhchen/action_recognition/dataset/numa/processed_data')
+        elif self.dataset != 'ntu_rgbd_60':
+            hdf5_list = os.listdir(f'/home/bhchen/action_recognition/dataset/{self.dataset}/processed_data')
         else:
             hdf5_list = os.listdir(f'/home/siddiqui/Action_Biometrics-RGB/frame_data/ntu_rgbd_120/')
         for count, row in enumerate(open(self.annotations, 'r').readlines()[1:]):
-            if self.dataset != "numa":
+            if "numa" not in self.dataset:
                 video_id, subject, action, placeholder1, placeholder2, placeholder3 = row.split(',')
             else:
                 video_id, subject, action, viewpoint = row.split(',')       
@@ -124,7 +128,7 @@ class omniDataLoader(Dataset):
                         self.data[f"{subject}_{action}_{video_id}_{placeholder1}_{placeholder2}_{placeholder3}"] = []
                     self.data[f"{subject}_{action}_{video_id}_{placeholder1}_{placeholder2}_{placeholder3}"].append([subject, action, video_id, placeholder1, placeholder2, placeholder3])
                     
-            elif self.dataset == 'numa':
+            elif "numa" in self.dataset:
                 if f'{video_id[:-4]};{action}.hdf5' in hdf5_list:
                     if df['subject'].value_counts()[int(subject)] < 2:
                         print(row, flush=True)
@@ -223,7 +227,7 @@ class omniDataLoader(Dataset):
                 camera = camera_index.index(camera)
                 return frames, camera, action, '_'.join([str(subject), video_id, str(action), str(start_frame), str(end_frame), video_id[-1]])
            
-        elif self.dataset == 'numa':
+        elif "numa" in self.dataset:
             if self.flag:
                 anchor = self.videos[index]
                 video_id, sub, act, viewpoint = anchor[0], anchor[1], anchor[2], anchor[3]
@@ -331,7 +335,7 @@ def frame_creation(row, dataset, videos_folder, height, width, num_frames, trans
             processed_skeletons = torch.stack([ele for ele in processed_action_skeletons]) # 16x3x25x2: skeletons from 16 equidistant frames in action range
             return processed_skeletons
 
-    elif dataset == "numa":
+    elif "numa" in dataset:
         list16 = []
         subject, action, video_id, viewpoint = row
         with h5py.File(f'{videos_folder}/{video_id[:-4]};{action}.hdf5', 'r') as f:
