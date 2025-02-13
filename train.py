@@ -173,6 +173,7 @@ def train_epoch(epoch, data_loader, model, optimizer, ema_optimizer, criterion, 
         sub_acc = torch.sum(sub) / (len(sub) * args.batch_size)
     
     else:
+        # for_single_view
         for i, (clips, labels, action_targets, keys) in enumerate(tqdm(data_loader)):
             assert len(clips) == len(labels)
             
@@ -195,7 +196,6 @@ def train_epoch(epoch, data_loader, model, optimizer, ema_optimizer, criterion, 
             acc = torch.sum(output_actions == action_targets)
             act_acc.append(acc)
 
-            # for_single_view
             loss = act_loss
 
             # if 3 < i < 5:
@@ -227,7 +227,7 @@ def train_epoch(epoch, data_loader, model, optimizer, ema_optimizer, criterion, 
 
     print('Training Epoch: %d, Loss: %.4f, SL: %.4f, AL: %.4f, SCL: %.4f, ACL: %.4f, OSL: %.4f, OAL: %.4f' % (epoch, np.mean(losses), np.mean(supervised_sub_losses),  np.mean(supervised_act_losses), np.mean(ss_contrastive_losses), np.mean(sa_contrastive_losses), np.mean(ortho_sub_losses), np.mean(ortho_act_losses)), flush=True)
     # for_single_view
-    print('Training Epoch: %d, View Accuracy: %.4f' % (epoch, sub_acc), flush=True)
+    # print('Training Epoch: %d, View Accuracy: %.4f' % (epoch, sub_acc), flush=True)
     
     print('Training Epoch: %d, Action Accuracy: %.4f' % (epoch, act_acc), flush=True)
         
@@ -236,8 +236,8 @@ def train_epoch(epoch, data_loader, model, optimizer, ema_optimizer, criterion, 
     writer.add_scalar('View Loss', np.mean(supervised_sub_losses), epoch)
     writer.add_scalar('Action Loss', np.mean(supervised_act_losses), epoch)
     # for_single_view
-    writer.add_scalar('View Contrastive Loss', np.mean(ss_contrastive_losses), epoch)
-    writer.add_scalar('Action Contrastive Loss', np.mean(sa_contrastive_losses), epoch)
+    # writer.add_scalar('View Contrastive Loss', np.mean(ss_contrastive_losses), epoch)
+    # writer.add_scalar('Action Contrastive Loss', np.mean(sa_contrastive_losses), epoch)
       
     return model
       
@@ -323,8 +323,8 @@ def test_model(cfg, load_model_path, use_cuda, args):
     
     # test num_views = 1
     # for_single_view
-    # num_views=1
-    num_views=3
+    num_views=1
+    # num_views=3
     model = build_model(args.model_version, num_views, cfg.num_actions)
 
     # find the model under dir and load it
@@ -428,13 +428,13 @@ def train_model(cfg, run_id, save_dir, use_cuda, args, writer):
     
     flag = True if args.model_version == 'v3' else False 
     # for_single_view
-    # flag = False   
+    flag = False   
     train_data_gen = omniDataLoader(cfg, 'train', transform=transform_train, flag=flag)
     val_data_gen = omniDataLoader(cfg, 'val', 1.0, transform=transform_test, flag=False)
     
-    train_dataloader = DataLoader(train_data_gen, batch_size=args.batch_size, shuffle=shuffle, num_workers=args.num_workers, drop_last=True, collate_fn=default_collate)
+    # train_dataloader = DataLoader(train_data_gen, batch_size=args.batch_size, shuffle=shuffle, num_workers=args.num_workers, drop_last=True, collate_fn=default_collate)
     # for_single_view
-    # train_dataloader = DataLoader(train_data_gen, batch_size=args.batch_size, shuffle=shuffle, num_workers=args.num_workers, drop_last=True, collate_fn=val_collate)
+    train_dataloader = DataLoader(train_data_gen, batch_size=args.batch_size, shuffle=shuffle, num_workers=args.num_workers, drop_last=True, collate_fn=val_collate)
     val_dataloader = DataLoader(val_data_gen, batch_size=args.batch_size, shuffle=shuffle, num_workers=args.num_workers, drop_last=False, collate_fn=val_collate)
     
     print("Number of training samples : " + str(len(train_data_gen)))
@@ -444,8 +444,8 @@ def train_model(cfg, run_id, save_dir, use_cuda, args, writer):
     print("Steps per epoch: " + str(steps_per_epoch))
     
     # for_single_view
-    # num_views=1
-    num_views=3
+    num_views=1
+    # num_views=3
     model = build_model(args.model_version, num_views, cfg.num_actions)
     
     #####################################################################################################################
