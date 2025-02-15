@@ -9,7 +9,7 @@ def build_config(dataset):
         cfg.num_actions = 120
         
     elif dataset == 'ntu_rgbd_60':
-        cfg.videos_folder =  '/home/siddiqui/Action_Biometrics-RGB/frame_data/ntu_rgbd_120'
+        cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/nturgb+d_rgb/'
         cfg.train_annotations = 'data/NTU60Train_CSmap.csv'
         cfg.test_annotations = 'data/NTU60Test_CSmap.csv'
         cfg.num_actions = 60

@@ -42,13 +42,11 @@ def splitActions(df):
 
 
 def indexNTU():
-    path = "/home/c3-0/datasets/NTU_RGBD_120/nturgb+d_rgb"
+    path = "/home/bhchen/action_recognition/dataset/nturgb+d_rgb"
     train_df_rows = []
     test_df_rows = []
     for row in os.listdir(path):
-        if row[16:20] in ['A050', 'A051', 'A052', 'A053', 'A054', 'A055', 'A056', 'A057', 'A058',
-                          'A059', 'A060', 'A106', 'A107', 'A108', 'A109', 'A110', 'A111', 'A112',
-                          'A113', 'A114', 'A115', 'A116', 'A117', 'A118', 'A119', 'A120']:
+        if row[16:20] not in ['A005', 'A006', 'A007', 'A008', 'A009', 'A014', 'A015']:
             continue
         else:
             s_num, cam_id, sub_id, rep_num, act_id = row[0:4], row[4:8], row[8:12], row[12:16], row[16:20]
@@ -59,11 +57,11 @@ def indexNTU():
                 
     df = pd.DataFrame(train_df_rows, columns=['video_id', 'setup', 'camera', 'subject', 'repetition', 'action'])
     df.reset_index()
-    df.to_csv("/home/siddiqui/Action_Biometrics/data/NTUTrain_map2.csv")
+    df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTrain_map_small.csv")
     
     df = pd.DataFrame(test_df_rows, columns=['video_id', 'setup', 'camera', 'subject', 'repetition', 'action'])
     df.reset_index()
-    df.to_csv("/home/siddiqui/Action_Biometrics/data/NTUTest_map2.csv")
+    df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTest_map_small.csv")
     
     
 def indexNTUupdated():
@@ -229,7 +227,7 @@ def small_NTU():
 def video_to_hp5y(setting):
     if setting == "ntu":
         anno = pd.read_csv("data/NTUTrain_map.csv")
-        path = "/home/c3-0/datasets/NTU_RGBD_120/nturgb+d_rgb"
+        path = "/home/bhchen/action_recognition/dataset/nturgb+d_rgb"
         resize = Resize([270, 480])
         frames = []
         for i, video in enumerate(anno['video_id']):
@@ -492,47 +490,48 @@ def splitNumaView(query_view):
             
             
 if __name__ == '__main__':
+    indexNTU()
     # transfer data to h5py
     # video_to_hp5y('numa')
 
     # split numa data's each view
     # splitNumaView(3)
     
-    pd.set_option('display.max_rows', 500)
-    #video_to_hp5y('ntu')
-    video = 'S007C001P017R002A058_rgb.avi'
-    path = '/home/c3-0/datasets/NTU_RGBD_120/nturgb+d_rgb'
-    resize = Resize([270, 480])
-    frames = []
-    count = 0
-    if ".avi" in video:
-        start = timeit.default_timer()
-        cap = cv2.VideoCapture(os.path.join(path, video))
-        length = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-        action_length = length / 24
-        fps10 = round(action_length * 10)
-        if fps10 > 32:
-            frame_ids = np.linspace(0, length - 1, fps10).astype(int)
-            frame_ids = np.linspace(0, length - 1, 32).astype(int)
-        else:
-            frame_ids = np.linspace(0, length - 1, 32).astype(int)
-        ret, frame = cap.read()
-        while ret:
-            if count in frame_ids:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                frame = torch.as_tensor(frame)
-                frame = frame.permute(2, 0, 1)
-                frame = resize(frame)
-                frames.append(frame)
-            count += 1
-            ret, frame = cap.read()
-        tframes = torch.stack([frame for frame in frames])
-        frames.clear()
-    print(f"one video time: {timeit.default_timer() - start}", flush=True)
-    if not os.path.exists(f'/home/siddiqui/Action_Biometrics/frame_data/ntu_rgbd_120/{video}.hdf5'):
-        with h5py.File(f'/home/siddiqui/Action_Biometrics/frame_data/ntu_rgbd_120/{video}.hdf5', 'w') as f:
-                dset = f.create_dataset('default', data=tframes)
-    del tframes
+    # pd.set_option('display.max_rows', 500)
+    # #video_to_hp5y('ntu')
+    # video = 'S007C001P017R002A058_rgb.avi'
+    # path = '/home/c3-0/datasets/NTU_RGBD_120/nturgb+d_rgb'
+    # resize = Resize([270, 480])
+    # frames = []
+    # count = 0
+    # if ".avi" in video:
+    #     start = timeit.default_timer()
+    #     cap = cv2.VideoCapture(os.path.join(path, video))
+    #     length = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+    #     action_length = length / 24
+    #     fps10 = round(action_length * 10)
+    #     if fps10 > 32:
+    #         frame_ids = np.linspace(0, length - 1, fps10).astype(int)
+    #         frame_ids = np.linspace(0, length - 1, 32).astype(int)
+    #     else:
+    #         frame_ids = np.linspace(0, length - 1, 32).astype(int)
+    #     ret, frame = cap.read()
+    #     while ret:
+    #         if count in frame_ids:
+    #             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    #             frame = torch.as_tensor(frame)
+    #             frame = frame.permute(2, 0, 1)
+    #             frame = resize(frame)
+    #             frames.append(frame)
+    #         count += 1
+    #         ret, frame = cap.read()
+    #     tframes = torch.stack([frame for frame in frames])
+    #     frames.clear()
+    # print(f"one video time: {timeit.default_timer() - start}", flush=True)
+    # if not os.path.exists(f'/home/siddiqui/Action_Biometrics/frame_data/ntu_rgbd_120/{video}.hdf5'):
+    #     with h5py.File(f'/home/siddiqui/Action_Biometrics/frame_data/ntu_rgbd_120/{video}.hdf5', 'w') as f:
+    #             dset = f.create_dataset('default', data=tframes)
+    # del tframes
 
 
 
