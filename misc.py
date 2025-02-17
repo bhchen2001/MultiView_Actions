@@ -45,29 +45,31 @@ def indexNTU():
     path = "/home/bhchen/action_recognition/dataset/nturgb+d_rgb"
     train_df_rows = []
     test_df_rows = []
+    train_subs = [1, 2, 4, 5, 8, 9, 13, 14, 15, 16, 17, 18, 19, 25, 27, 28, 31, 34, 35, 38, 45, 46, 47, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 70, 74, 78,
+                  80, 81, 82, 83, 84, 85, 86, 89, 91, 92, 93, 94, 95, 97, 98, 100, 103]
     for row in os.listdir(path):
         if row[16:20] not in ['A005', 'A006', 'A007', 'A008', 'A009', 'A014', 'A015']:
             continue
         else:
             s_num, cam_id, sub_id, rep_num, act_id = row[0:4], row[4:8], row[8:12], row[12:16], row[16:20]
-            if int(sub_id[1:]) in range(1, 21):
+            if int(sub_id[1:]) in train_subs:
                 train_df_rows.append([row, sub_id[1:], act_id[1:], cam_id[1:], rep_num[1:], s_num[1:]])
             else:
                 test_df_rows.append([row, sub_id[1:], act_id[1:], cam_id[1:], rep_num[1:], s_num[1:]])
                 
     df = pd.DataFrame(train_df_rows, columns=['video_id', 'subject', 'action', 'camera', 'repetition', 'setup'])
     # df.reset_index()
-    df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTrain_map_small.csv", index=False)
+    df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTrainCS.csv", index=False)
     
     df = pd.DataFrame(test_df_rows, columns=['video_id', 'subject', 'action', 'camera', 'repetition', 'setup'])
     # df.reset_index()
-    df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTest_map_small.csv", index=False)
+    df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTestCS.csv", index=False)
 
     # merge train_df_rows and test_df_rows and sort by video_id, reorder index
     df = pd.DataFrame(train_df_rows + test_df_rows, columns=['video_id', 'subject', 'action', 'camera', 'repetition', 'setup'])
     df = df.sort_values(by='video_id')
     # df.reset_index(drop=True, inplace=True)
-    df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUMaster_map_small.csv", index=False)
+    df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUMaster.csv", index=False)
 
     
     
