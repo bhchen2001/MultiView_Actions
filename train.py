@@ -298,7 +298,7 @@ def val_epoch(cfg, epoch, data_loader, model, writer, use_cuda, args, action_fla
     writer.add_scalar('Validation Action Accuracy', act_acc, epoch)
     writer.add_scalar('Validation View Accuracy', sub_acc, epoch)
 
-    for i in range(10):
+    for i in range(cfg.num_actions):
         writer.add_scalar('class_val_accuracy/class{}'.format(i), class_correct[i] / class_total[i], epoch)
 
     return act_acc
