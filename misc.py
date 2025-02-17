@@ -5,7 +5,7 @@ import os
 import random
 import torch
 import h5py
-# import cv2
+import cv2
 #from torch import nn, einsum
 #from einops import rearrange, repeat
 import timeit
@@ -59,10 +59,12 @@ def indexNTU():
                 
     df = pd.DataFrame(train_df_rows, columns=['video_id', 'subject', 'action', 'camera', 'repetition', 'setup'])
     # df.reset_index()
+    df = df.sort_values(by='video_id')
     df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTrainCS.csv", index=False)
     
     df = pd.DataFrame(test_df_rows, columns=['video_id', 'subject', 'action', 'camera', 'repetition', 'setup'])
     # df.reset_index()
+    df = df.sort_values(by='video_id')
     df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTestCS.csv", index=False)
 
     # merge train_df_rows and test_df_rows and sort by video_id, reorder index
@@ -235,16 +237,19 @@ def small_NTU():
     
 def video_to_hp5y(setting):
     if setting == "ntu":
-        anno = pd.read_csv("data//ntu60/NTUMaster_map_small.csv")
+        anno = pd.read_csv("data//ntu60/NTUMaster.csv")
         path = "/home/bhchen/action_recognition/dataset/nturgb+d_rgb"
         resize = Resize([270, 480])
         frames = []
+        # maintain anno rows that contains setup 1~5
+        anno = anno[anno['setup'].isin([17])]
+
         for i, video in enumerate(anno['video_id']):
             start = timeit.default_timer()
             if i % 100 == 0:
                 print(i, flush=True)
-            if os.path.exists(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed/{video}.hdf5'):
-                print(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed/{video}.hdf5 already exists!, {i}', flush=True)
+            if os.path.exists(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed_data/{video}.hdf5'):
+                print(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed_data/{video}.hdf5 already exists!, {i}', flush=True)
                 continue
             count = 0
             if ".avi" in video:
@@ -271,11 +276,11 @@ def video_to_hp5y(setting):
                 tframes = torch.stack([frame for frame in frames])
                 frames.clear()
             print(f"one video time: {timeit.default_timer() - start}", flush=True)
-            if not os.path.exists(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed/{video}.hdf5'):
-                with h5py.File(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed/{video}.hdf5', 'w') as f:
+            if not os.path.exists(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed_data/{video}.hdf5'):
+                with h5py.File(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed_data/{video}.hdf5', 'w') as f:
                         dset = f.create_dataset('default', data=tframes)
             else:
-                print(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed/{video}.hdf5 already exists!, {i}', flush=True)
+                print(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed_data/{video}.hdf5 already exists!, {i}', flush=True)
             del tframes
             
             
@@ -499,9 +504,9 @@ def splitNumaView(query_view):
             
             
 if __name__ == '__main__':
-    indexNTU()
+    # indexNTU()
     # transfer video to h5py
-    # video_to_hp5y('ntu')
+    video_to_hp5y('ntu')
 
     # split numa data's each view
     # splitNumaView(3)
