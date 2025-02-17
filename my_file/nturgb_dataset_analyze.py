@@ -1,29 +1,36 @@
 import pandas as pd
 import numpy as np
 
-def analyze_dataset(dataset_path):
+def analyze_dataset(dataset_path, view = -1, subject = -1, action = -1):
     # read the dataset
     dataset = pd.read_csv(dataset_path)
+
+    if view > 0:
+        dataset = dataset[dataset['camera'] == view]
 
     # get the number of samples
     num_samples = len(dataset)
     print(f"Number of samples: {num_samples}")
 
-    # get the instances num of each subject, action, and viewpoint
+    # get the instances num of each subject, action, and camera
     num_subjects = len(dataset['subject'].unique())
     num_actions = len(dataset['action'].unique())
-    num_viewpoints = len(dataset['viewpoint'].unique())
+    num_viewpoints = len(dataset['camera'].unique())
+    num_setup = len(dataset['setup'].unique())
     print(f"Number of subjects: {num_subjects}")
     print(f"Number of actions: {num_actions}")
     print(f"Number of viewpoints: {num_viewpoints}")
+    print(f"Number of setups: {num_setup}")
 
-    # get the number of samples per subject, action, and viewpoint
+    # get the number of samples per subject, action, and camera
     samples_per_subject = dataset.groupby('subject').size()
     samples_per_action = dataset.groupby('action').size()
-    samples_per_viewpoint = dataset.groupby('viewpoint').size()
+    samples_per_viewpoint = dataset.groupby('camera').size()
+    samples_per_setup = dataset.groupby('setup').size()
     print(f"Samples per subject: {samples_per_subject}")
     print(f"Samples per action: {samples_per_action}")
-    print(f"Samples per viewpoint: {samples_per_viewpoint}")
+    print(f"Samples per camera: {samples_per_viewpoint}")
+    print(f"Samples per setup: {samples_per_setup}")
 
 def generate_balanced_val_dataset(dataset_path, val_dataset_path, type, val_ratio):
     dataset = pd.read_csv(dataset_path)
@@ -40,8 +47,8 @@ def generate_balanced_val_dataset(dataset_path, val_dataset_path, type, val_rati
                     val_dataset = pd.concat([val_dataset, val_subset])
     elif type == 'CS':
         for action in dataset['action'].unique():
-            for viewpoint in dataset['viewpoint'].unique():
-                subset = dataset[(dataset['action'] == action) & (dataset['viewpoint'] == viewpoint)]
+            for camera in dataset['camera'].unique():
+                subset = dataset[(dataset['action'] == action) & (dataset['camera'] == camera)]
                 if not subset.empty:
                     val_subset = subset.sample(frac=val_ratio, random_state=42)
                     val_dataset = pd.concat([val_dataset, val_subset])
@@ -58,22 +65,27 @@ def generate_balanced_val_dataset(dataset_path, val_dataset_path, type, val_rati
     val_dataset.to_csv(val_dataset_path, index=False)
     print(f"Validation dataset saved with {len(val_dataset)} samples.")
 
-def generate_balanced_train_dataset(dataset_path, train_dataset_path, test_dataset_path, type, val_ratio=0.2):
+def generate_balanced_train_dataset(dataset_path, train_dataset_path, test_dataset_path, type, val_ratio=0.2, view = 0):
     dataset = pd.read_csv(dataset_path)
 
-    # Create an empty DataFrame for the validation dataset
-    train_dataset = pd.DataFrame(columns=dataset.columns)
-    test_dataset = pd.DataFrame(columns=dataset.columns)
+    if type == 'View' and view > 0:
+        dataset = dataset[dataset['camera'] == view]
+    elif type == 'View' and view <=0:
+        raise ValueError("View should be greater than 0 for View type dataset.")
+    
+    train_dataset = []
+    test_dataset = []
 
     if type == 'View':
-        for subject in dataset['subject'].unique():
-            for action in dataset['action'].unique():
-                subset = dataset[(dataset['subject'] == subject) & (dataset['action'] == action)]
-                if not subset.empty:
-                    test_subset = subset.sample(frac=val_ratio, random_state=42)
-                    train_subset = subset.drop(test_subset.index)
-                    train_dataset = pd.concat([train_dataset, train_subset])
-                    test_dataset = pd.concat([test_dataset, test_subset])
+        subs_train = [1, 2, 4, 5, 8, 9, 13, 14, 15, 16, 17, 18, 19, 25, 27, 28, 31, 34, 35, 38]
+        for row in dataset.iterrows():
+            if row[1]['subject'] in subs_train:
+                train_dataset.append(row[1])
+            else:
+                test_dataset.append(row[1])
+
+    train_dataset = pd.DataFrame(train_dataset)
+    test_dataset = pd.DataFrame(test_dataset)
 
     train_dataset.to_csv(train_dataset_path, index=False)
     test_dataset.to_csv(test_dataset_path, index=False)
@@ -82,12 +94,15 @@ def generate_balanced_train_dataset(dataset_path, train_dataset_path, test_datas
 
 
 if __name__ == '__main__':
-    master_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/NUMAMaster.csv'
-    train_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/NUMATrain_View1.csv'
-    test_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/NUMATest_View1.csv'
+    master_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUMaster_map_small.csv'
+    train_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTrain_View3_small.csv'
+    test_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTest_View3_small.csv'
+    # train_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ori/NTU60Train_CSmap.csv'
+    # test_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ori/NTU60Test_CSmap.csv'
     # val_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/NUMAVal_View1.csv'
-    analyze_dataset(master_path)
+    # analyze_dataset(master_path, view = 1)
+    # analyze_dataset(train_path)
     # analyze_dataset(test_path)
-    # generate_balanced_train_dataset(master_path, train_path, test_path, type='View', val_ratio=0.2)
+    generate_balanced_train_dataset(master_path, train_path, test_path, type='View', val_ratio=0.2, view = 3)
     # generate_balanced_val_dataset(test_path, val_path, 'View', val_ratio=0.5)
     # analyze_dataset(val_dataset_path)
