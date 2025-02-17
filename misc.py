@@ -50,18 +50,25 @@ def indexNTU():
             continue
         else:
             s_num, cam_id, sub_id, rep_num, act_id = row[0:4], row[4:8], row[8:12], row[12:16], row[16:20]
-            if int(sub_id[1:]) in range(1, 71):
-                train_df_rows.append([row, s_num[1:], cam_id[1:], sub_id[1:], rep_num[1:], act_id[1:]])
+            if int(sub_id[1:]) in range(1, 21):
+                train_df_rows.append([row, sub_id[1:], act_id[1:], cam_id[1:], rep_num[1:], s_num[1:]])
             else:
-                test_df_rows.append([row, s_num[1:], cam_id[1:], sub_id[1:], rep_num[1:], act_id[1:]])
+                test_df_rows.append([row, sub_id[1:], act_id[1:], cam_id[1:], rep_num[1:], s_num[1:]])
                 
-    df = pd.DataFrame(train_df_rows, columns=['video_id', 'setup', 'camera', 'subject', 'repetition', 'action'])
-    df.reset_index()
-    df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTrain_map_small.csv")
+    df = pd.DataFrame(train_df_rows, columns=['video_id', 'subject', 'action', 'camera', 'repetition', 'setup'])
+    # df.reset_index()
+    df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTrain_map_small.csv", index=False)
     
-    df = pd.DataFrame(test_df_rows, columns=['video_id', 'setup', 'camera', 'subject', 'repetition', 'action'])
-    df.reset_index()
-    df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTest_map_small.csv")
+    df = pd.DataFrame(test_df_rows, columns=['video_id', 'subject', 'action', 'camera', 'repetition', 'setup'])
+    # df.reset_index()
+    df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTest_map_small.csv", index=False)
+
+    # merge train_df_rows and test_df_rows and sort by video_id, reorder index
+    df = pd.DataFrame(train_df_rows + test_df_rows, columns=['video_id', 'subject', 'action', 'camera', 'repetition', 'setup'])
+    df = df.sort_values(by='video_id')
+    # df.reset_index(drop=True, inplace=True)
+    df.to_csv("/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUMaster_map_small.csv", index=False)
+
     
     
 def indexNTUupdated():
@@ -226,7 +233,7 @@ def small_NTU():
     
 def video_to_hp5y(setting):
     if setting == "ntu":
-        anno = pd.read_csv("data/NTUTrain_map.csv")
+        anno = pd.read_csv("data//ntu60/NTUMaster_map_small.csv")
         path = "/home/bhchen/action_recognition/dataset/nturgb+d_rgb"
         resize = Resize([270, 480])
         frames = []
@@ -234,8 +241,8 @@ def video_to_hp5y(setting):
             start = timeit.default_timer()
             if i % 100 == 0:
                 print(i, flush=True)
-            if os.path.exists(f'/home/siddiqui/Action_Biometrics/frame_data/ntu_rgbd_120/{video}.hdf5'):
-                print(f'/home/siddiqui/Action_Biometrics/frame_data/ntu_rgbd_120/{video}.hdf5 already exists!, {i}', flush=True)
+            if os.path.exists(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed/{video}.hdf5'):
+                print(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed/{video}.hdf5 already exists!, {i}', flush=True)
                 continue
             count = 0
             if ".avi" in video:
@@ -262,11 +269,11 @@ def video_to_hp5y(setting):
                 tframes = torch.stack([frame for frame in frames])
                 frames.clear()
             print(f"one video time: {timeit.default_timer() - start}", flush=True)
-            if not os.path.exists(f'/home/siddiqui/Action_Biometrics/frame_data/ntu_rgbd_120/{video}.hdf5'):
-                with h5py.File(f'/home/siddiqui/Action_Biometrics/frame_data/ntu_rgbd_120/{video}.hdf5', 'w') as f:
+            if not os.path.exists(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed/{video}.hdf5'):
+                with h5py.File(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed/{video}.hdf5', 'w') as f:
                         dset = f.create_dataset('default', data=tframes)
             else:
-                print(f'/home/siddiqui/Action_Biometrics/frame_data/ntu_rgbd_120/{video}.hdf5 already exists!, {i}', flush=True)
+                print(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed/{video}.hdf5 already exists!, {i}', flush=True)
             del tframes
             
             
@@ -491,8 +498,8 @@ def splitNumaView(query_view):
             
 if __name__ == '__main__':
     indexNTU()
-    # transfer data to h5py
-    # video_to_hp5y('numa')
+    # transfer video to h5py
+    # video_to_hp5y('ntu')
 
     # split numa data's each view
     # splitNumaView(3)
