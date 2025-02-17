@@ -94,15 +94,15 @@ def generate_balanced_train_dataset(dataset_path, train_dataset_path, test_datas
 
 
 if __name__ == '__main__':
-    master_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUMaster_map_small.csv'
-    train_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTrain_View3_small.csv'
-    test_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTest_View3_small.csv'
+    master_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUMaster.csv'
+    train_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTrain_View3.csv'
+    test_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTest_View3.csv'
     # train_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ori/NTU60Train_CSmap.csv'
     # test_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ori/NTU60Test_CSmap.csv'
     # val_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/NUMAVal_View1.csv'
     # analyze_dataset(master_path, view = 1)
     # analyze_dataset(train_path)
-    # analyze_dataset(test_path)
-    generate_balanced_train_dataset(master_path, train_path, test_path, type='View', val_ratio=0.2, view = 3)
+    analyze_dataset(test_path)
+    # generate_balanced_train_dataset(master_path, train_path, test_path, type='View', val_ratio=0.2, view = 3)
     # generate_balanced_val_dataset(test_path, val_path, 'View', val_ratio=0.5)
     # analyze_dataset(val_dataset_path)
