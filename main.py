@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--run_id', dest='run_id', type=str, required=False, help='Please provide an ID for the current run')
 
-    parser.add_argument('--dataset', type=str, required=True, help='Dataset to use.', choices=["ntu_rgbd_120", 'ntu_rgbd_60', "pkummd",  'mergedntupk', 'numa_cs', 'numa_cv', 'numa_view'])
+    parser.add_argument('--dataset', type=str, required=True, help='Dataset to use.', choices=["ntu_rgbd_120", 'ntu_rgbd_60', 'ntu_rgbd_60_view', "pkummd",  'mergedntupk', 'numa_cs', 'numa_cv', 'numa_view'])
 
     parser.add_argument('--model_version', type=str, required=True, help='Specify the model to use', 
                         choices=['v3'])
