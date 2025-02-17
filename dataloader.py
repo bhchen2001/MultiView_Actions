@@ -92,7 +92,7 @@ class omniDataLoader(Dataset):
         elif self.dataset != 'ntu_rgbd_60':
             hdf5_list = os.listdir(f'/home/bhchen/action_recognition/dataset/{self.dataset}/processed_data')
         else:
-            hdf5_list = os.listdir(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb')
+            hdf5_list = os.listdir(f'/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed_data')
         for count, row in enumerate(open(self.annotations, 'r').readlines()[1:]):
             if "numa" not in self.dataset:
                 video_id, subject, action, placeholder1, placeholder2, placeholder3 = row.split(',')
