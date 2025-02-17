@@ -97,7 +97,7 @@ class omniDataLoader(Dataset):
             else:
                 video_id, subject, action, viewpoint = row.split(',')       
                     
-            if self.dataset == 'ntu_rgbd_120' or self.dataset == 'ntu_rgbd_60' or self.dataset == 'ntu_rgbd_60_view':
+            if self.dataset == 'ntu_rgbd_120' or self.dataset == 'ntu_rgbd_60' or 'ntu_rgbd_60_view' in self.dataset:
                 if f'{video_id}.hdf5' in hdf5_list:
                     if df['subject'].value_counts()[int(subject)] < 2:
                         print(row, flush=True)
@@ -155,7 +155,7 @@ class omniDataLoader(Dataset):
         return len(self.videos)
     
     def __getitem__(self, index):
-        if self.dataset == 'ntu_rgbd_120' or self.dataset == 'ntu_rgbd_60' or self.dataset == 'ntu_rgbd_60_view':
+        if self.dataset == 'ntu_rgbd_120' or self.dataset == 'ntu_rgbd_60' or 'ntu_rgbd_60_view' in self.dataset:
             if self.flag:
                 anchor = self.videos[index]
                 video_id, sub, act, camera, rep, setup = anchor[0], anchor[1], anchor[2], anchor[3], anchor[4], anchor[5]
@@ -262,7 +262,7 @@ class omniDataLoader(Dataset):
                 
             
 def frame_creation(row, dataset, videos_folder, height, width, num_frames, transform):    
-    if dataset == "ntu_rgbd_120" or dataset == 'ntu_rgbd_60' or dataset == 'ntu_rgbd_60_view':
+    if dataset == "ntu_rgbd_120" or dataset == 'ntu_rgbd_60' or 'ntu_rgbd_60_view' in dataset:
         list16 = []
         subject, action, video_id, start_frame, end_frame = row[0], row[1], row[2], row[3], row[4]
         frames = h5py.File(os.path.join(videos_folder, f'{video_id}.hdf5'), 'r')

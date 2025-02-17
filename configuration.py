@@ -15,11 +15,25 @@ def build_config(dataset):
         cfg.test_annotations = 'data/ntu60/NTUTest_map_small.csv'
         cfg.num_actions = 7
 
-    elif dataset == 'ntu_rgbd_60_view':
+    elif dataset == 'ntu_rgbd_60_view1':
         cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed_data'
-        cfg.train_annotations = 'data/ntu60/NTUTrain_View2_small.csv'
-        cfg.val_annotations = 'data/ntu60/NTUTest_View2_small.csv'
-        cfg.test_annotations = 'data/ntu60/NTUTest_View2_small.csv'
+        cfg.train_annotations = 'data/ntu60/NTUTrain_View1.csv'
+        cfg.val_annotations = 'data/ntu60/NTUTest_View1.csv'
+        cfg.test_annotations = 'data/ntu60/NTUTest_View1.csv'
+        cfg.num_actions = 7
+
+    elif dataset == 'ntu_rgbd_60_view2':
+        cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed_data'
+        cfg.train_annotations = 'data/ntu60/NTUTrain_View2.csv'
+        cfg.val_annotations = 'data/ntu60/NTUTest_View2.csv'
+        cfg.test_annotations = 'data/ntu60/NTUTest_View2.csv'
+        cfg.num_actions = 7
+
+    elif dataset == 'ntu_rgbd_60_view3':
+        cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed_data'
+        cfg.train_annotations = 'data/ntu60/NTUTrain_View3.csv'
+        cfg.val_annotations = 'data/ntu60/NTUTest_View3.csv'
+        cfg.test_annotations = 'data/ntu60/NTUTest_View3.csv'
         cfg.num_actions = 7
         
     elif dataset == "pkummd":
