@@ -15,4 +15,6 @@ nvidia-smi topo -m
 python3 main.py --train_classifier --gpu 0 --run_id ntu60_single_view1 --dataset ntu_rgbd_60_view --model_version 'v3' --batch_size 8 --num_epochs 51 --num_workers 8 --learning_rate 1e-4 --weight_decay 1e-6 --optimizer ADAM
 python3 main.py --train_classifier --gpu 0 --run_id ntu60_single_view2 --dataset ntu_rgbd_60_view --model_version 'v3' --batch_size 8 --num_epochs 51 --num_workers 8 --learning_rate 1e-4 --weight_decay 1e-6 --optimizer ADAM
 python3 main.py --train_classifier --gpu 0 --run_id ntu60_single_view3 --dataset ntu_rgbd_60_view --model_version 'v3' --batch_size 8 --num_epochs 51 --num_workers 8 --learning_rate 1e-4 --weight_decay 1e-6 --optimizer ADAM
-python3 main.py --test_classifier --gpu 0 --load_model ntu60_single_view1_17-02-25_1231 --dataset ntu_rgbd_60_view --model_version 'v3' --batch_size 8 --num_workers 8
+python3 main.py --test_classifier --gpu 0 --load_model ntu60_single_view1_17-02-25_2109 --dataset ntu_rgbd_60_view1 --model_version 'v3' --batch_size 8 --num_workers 8
+python3 main.py --test_classifier --gpu 0 --load_model ntu60_single_view2_17-02-25_2241 --dataset ntu_rgbd_60_view2 --model_version 'v3' --batch_size 8 --num_workers 8
+python3 main.py --test_classifier --gpu 0 --load_model ntu60_single_view3_18-02-25_0004 --dataset ntu_rgbd_60_view3 --model_version 'v3' --batch_size 8 --num_workers 8
