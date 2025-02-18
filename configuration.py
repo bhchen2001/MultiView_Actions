@@ -10,9 +10,9 @@ def build_config(dataset):
         
     elif dataset == 'ntu_rgbd_60':
         cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed_data'
-        cfg.train_annotations = 'data/ntu60/NTUTrain_map_small.csv'
-        cfg.val_annotations = 'data/ntu60/NTUTest_map_small.csv'
-        cfg.test_annotations = 'data/ntu60/NTUTest_map_small.csv'
+        cfg.train_annotations = 'data/ntu60/NTUTrainCS.csv'
+        cfg.val_annotations = 'data/ntu60/NTUTestCS.csv'
+        cfg.test_annotations = 'data/ntu60/NTUTestCS.csv'
         cfg.num_actions = 7
         
     elif dataset == "pkummd":
