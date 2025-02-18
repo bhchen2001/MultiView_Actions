@@ -87,6 +87,19 @@ def generate_balanced_train_dataset(dataset_path, train_dataset_path, test_datas
     train_dataset = pd.DataFrame(train_dataset)
     test_dataset = pd.DataFrame(test_dataset)
 
+    # convert numeric columns to 3-digits format (17 --> 017)
+    train_dataset['subject'] = train_dataset['subject'].apply(lambda x: '{0:0>3}'.format(x))
+    train_dataset['action'] = train_dataset['action'].apply(lambda x: '{0:0>3}'.format(x))
+    train_dataset['camera'] = train_dataset['camera'].apply(lambda x: '{0:0>3}'.format(x))
+    train_dataset['setup'] = train_dataset['setup'].apply(lambda x: '{0:0>3}'.format(x))
+    train_dataset['repetition'] = train_dataset['repetition'].apply(lambda x: '{0:0>3}'.format(x))
+
+    test_dataset['subject'] = test_dataset['subject'].apply(lambda x: '{0:0>3}'.format(x))
+    test_dataset['action'] = test_dataset['action'].apply(lambda x: '{0:0>3}'.format(x))
+    test_dataset['camera'] = test_dataset['camera'].apply(lambda x: '{0:0>3}'.format(x))
+    test_dataset['setup'] = test_dataset['setup'].apply(lambda x: '{0:0>3}'.format(x))
+    test_dataset['repetition'] = test_dataset['repetition'].apply(lambda x: '{0:0>3}'.format(x))
+
     train_dataset.to_csv(train_dataset_path, index=False)
     test_dataset.to_csv(test_dataset_path, index=False)
     print(f"Train dataset saved with {len(train_dataset)} samples.")
@@ -95,14 +108,14 @@ def generate_balanced_train_dataset(dataset_path, train_dataset_path, test_datas
 
 if __name__ == '__main__':
     master_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUMaster.csv'
-    train_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTrain_View3.csv'
-    test_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTest_View3.csv'
+    train_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTrain_View2.csv'
+    test_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ntu60/NTUTest_View2.csv'
     # train_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ori/NTU60Train_CSmap.csv'
     # test_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/ori/NTU60Test_CSmap.csv'
     # val_path = '/home/bhchen/action_recognition/model/MultiView_Actions/data/NUMAVal_View1.csv'
     # analyze_dataset(master_path, view = 1)
     # analyze_dataset(train_path)
-    analyze_dataset(test_path)
-    # generate_balanced_train_dataset(master_path, train_path, test_path, type='View', val_ratio=0.2, view = 3)
+    # analyze_dataset(test_path)
+    generate_balanced_train_dataset(master_path, train_path, test_path, type='View', val_ratio=0.2, view = 2)
     # generate_balanced_val_dataset(test_path, val_path, 'View', val_ratio=0.5)
     # analyze_dataset(val_dataset_path)
