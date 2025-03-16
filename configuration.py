@@ -8,12 +8,26 @@ def build_config(dataset):
         cfg.test_annotations = 'data/NTUTest_CVmap.csv'
         cfg.num_actions = 120
         
-    elif dataset == 'ntu_rgbd_60':
-        cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/nturgb+d_rgb/processed_data'
-        cfg.train_annotations = 'data/ntu60/NTUTrainCS.csv'
-        cfg.val_annotations = 'data/ntu60/NTUTestCS.csv'
-        cfg.test_annotations = 'data/ntu60/NTUTestCS.csv'
-        cfg.num_actions = 7
+    # elif dataset == 'ntu_rgbd_60':
+    #     cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/lab639_fisheye/processed_data'
+    #     cfg.train_annotations = 'data/lab639_fisheye/fisheye639_CV_train_1_3_4_test_2_train.csv'
+    #     cfg.val_annotations = 'data/lab639_fisheye/fisheye639_CV_train_1_3_4_test_2_test.csv'
+    #     cfg.test_annotations = 'data/lab639_fisheye/fisheye639_DIF_test.csv'
+    #     cfg.num_actions = 10
+
+    # elif 'ntu_rgbd_60' in dataset:
+    #     cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/lab639_fisheye/processed_data_S003'
+    #     cfg.train_annotations = 'data/lab639_fisheye/fisheye639_S003_{0}_train.csv'.format(dataset.split('_')[-1])
+    #     cfg.val_annotations = 'data/lab639_fisheye/fisheye639_S003_{0}_test.csv'.format(dataset.split('_')[-1])
+    #     cfg.test_annotations = 'data/lab639_fisheye/fisheye639_S003_{0}_test.csv'.format(dataset.split('_')[-1])
+    #     cfg.num_actions = 10
+
+    elif 'ntu_rgbd_60' in dataset:
+        cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/lab639_fisheye/processed_data_S003'
+        cfg.train_annotations = 'data/lab639_fisheye/fisheye639_S003_{0}_train.csv'.format(dataset.split('_')[-1])
+        cfg.val_annotations = 'data/lab639_fisheye/fisheye639_S003_{0}_test.csv'.format(dataset.split('_')[-1])
+        cfg.test_annotations = 'data/lab639_fisheye/fisheye639_S003_{0}_test.csv'.format(dataset.split('_')[-1])
+        cfg.num_actions = 10
         
     elif dataset == "pkummd":
         cfg.videos_folder =  '/home/siddiqui/Action_Biometrics-RGB/frame_data/pkummd'

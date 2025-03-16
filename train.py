@@ -321,10 +321,7 @@ def test_model(cfg, load_model_path, use_cuda, args):
     
     print("Number of testing samples : " + str(len(test_data_gen)))
     
-    # test num_views = 1
-    # for_single_view
-    # num_views=1
-    num_views=3
+    num_views=4
     model = build_model(args.model_version, num_views, cfg.num_actions)
 
     # find the model under dir and load it
@@ -443,9 +440,7 @@ def train_model(cfg, run_id, save_dir, use_cuda, args, writer):
     steps_per_epoch = len(train_data_gen) / args.batch_size
     print("Steps per epoch: " + str(steps_per_epoch))
     
-    # for_single_view
-    # num_views=1
-    num_views=3
+    num_views=4
     model = build_model(args.model_version, num_views, cfg.num_actions)
     
     #####################################################################################################################
