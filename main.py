@@ -28,7 +28,13 @@ def train_classifier(run_id, use_cuda, args):
 
 def test_classifier(load_model, use_cuda, args):
     cfg = build_config(args.dataset)
-    load_model_path = os.path.join(cfg.saved_models_dir, load_model)
+    # find the path that contain the load_model
+    saved_model_list = os.listdir(cfg.saved_models_dir)
+    load_model_path = None
+    for saved_model in saved_model_list:
+        if load_model in saved_model:
+            load_model_path = os.path.join(cfg.saved_models_dir, saved_model)
+            break
     if not os.path.exists(load_model_path):
         raise Exception('Model not found')
     test_model(cfg, load_model_path, use_cuda, args)
