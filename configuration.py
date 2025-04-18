@@ -15,19 +15,27 @@ def build_config(dataset):
     #     cfg.test_annotations = 'data/lab639_fisheye/fisheye639_DIF_test.csv'
     #     cfg.num_actions = 10
 
+    elif 'ntu_rgbd_60' in dataset:
+        cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/lab639_fisheye/processed_data_S008'
+        cfg.train_annotations = 'data/lab639_fisheye/fisheye639_S008_{0}_train.csv'.format(dataset.split('_')[-1])
+        cfg.val_annotations = 'data/lab639_fisheye/fisheye639_S008_{0}_test.csv'.format(dataset.split('_')[-1])
+        cfg.test_annotations = 'data/lab639_fisheye/fisheye639_S008_{0}_test.csv'.format(dataset.split('_')[-1])
+        # cfg.test_annotations = 'data/lab639_fisheye/fisheye639_S003_S007_multi_pos_test.csv'
+        cfg.num_actions = 10
+
     # elif 'ntu_rgbd_60' in dataset:
-    #     cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/lab639_fisheye/processed_data_S003'
+    #     cfg.videos_folder =  '/mnt/disk1/bhchen/action_recognition/dataset/lab639_fisheye/processed_data_S003'
     #     cfg.train_annotations = 'data/lab639_fisheye/fisheye639_S003_{0}_train.csv'.format(dataset.split('_')[-1])
     #     cfg.val_annotations = 'data/lab639_fisheye/fisheye639_S003_{0}_test.csv'.format(dataset.split('_')[-1])
     #     cfg.test_annotations = 'data/lab639_fisheye/fisheye639_S003_{0}_test.csv'.format(dataset.split('_')[-1])
     #     cfg.num_actions = 10
 
-    elif 'ntu_rgbd_60' in dataset:
-        cfg.videos_folder =  '/home/bhchen/action_recognition/dataset/lab639_fisheye/processed_data_S003'
-        cfg.train_annotations = 'data/lab639_fisheye/fisheye639_S003_{0}_train.csv'.format(dataset.split('_')[-1])
-        cfg.val_annotations = 'data/lab639_fisheye/fisheye639_S003_{0}_test.csv'.format(dataset.split('_')[-1])
-        cfg.test_annotations = 'data/lab639_fisheye/fisheye639_S003_{0}_test.csv'.format(dataset.split('_')[-1])
-        cfg.num_actions = 10
+    # elif 'ntu_rgbd_60' in dataset:
+    #     cfg.videos_folder =  '/mnt/disk1/bhchen/action_recognition/dataset/lab639_fisheye/processed_data_S003'
+    #     cfg.train_annotations = 'data/lab639_fisheye/fisheye639_S003_ITEM_train.csv'
+    #     cfg.val_annotations = 'data/lab639_fisheye/fisheye639_S003_ITEM_test.csv'
+    #     cfg.test_annotations = 'data/lab639_fisheye/fisheye639_S003_ITEM_test.csv'
+    #     cfg.num_actions = 10
         
     elif dataset == "pkummd":
         cfg.videos_folder =  '/home/siddiqui/Action_Biometrics-RGB/frame_data/pkummd'
