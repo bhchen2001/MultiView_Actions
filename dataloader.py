@@ -90,7 +90,7 @@ class omniDataLoader(Dataset):
         if 'numa' in self.dataset:
             hdf5_list = os.listdir(f'/home/bhchen/action_recognition/dataset/numa/processed_data')
         else:
-            hdf5_list = os.listdir(f'/home/bhchen/action_recognition/dataset/lab639_fisheye/processed_data_S003')
+            hdf5_list = os.listdir(cfg.videos_folder)
         for count, row in enumerate(open(self.annotations, 'r').readlines()[1:]):
             if "numa" not in self.dataset:
                 video_id, subject, action, placeholder1, placeholder2, placeholder3 = row.split(',')
@@ -144,6 +144,7 @@ class omniDataLoader(Dataset):
             random.shuffle(self.videos)
 
         self.actions = sorted(self.actions)
+        print(self.actions)
         self.views = sorted(self.views)
         #print(len(self.subjects), len(self.actions), len(self.videos), len(self.views), self.views, flush=True)
         self.height = height

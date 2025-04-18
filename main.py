@@ -2,7 +2,7 @@ import argparse
 from datetime import datetime
 import os
 import torch
-from train import train_model, test_model
+from train import train_model, test_model, test_model_with_confusion_matrix
 from configuration import build_config
 from tensorboardX import SummaryWriter
 import random 
@@ -37,7 +37,8 @@ def test_classifier(load_model, use_cuda, args):
             break
     if not os.path.exists(load_model_path):
         raise Exception('Model not found')
-    test_model(cfg, load_model_path, use_cuda, args)
+    # test_model(cfg, load_model_path, use_cuda, args)
+    test_model_with_confusion_matrix(cfg, load_model_path, use_cuda, args)
 
 
 def main(args):

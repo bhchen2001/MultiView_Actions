@@ -6,6 +6,8 @@ import random
 warnings.filterwarnings("ignore")
 import numpy as np
 from tqdm import tqdm
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
 
 import torch
@@ -29,6 +31,7 @@ from torchvision.transforms import (
     Compose,
     RandomCrop,
     RandomHorizontalFlip,
+    Resize,
 )
 
 from dataloader import omniDataLoader, default_collate, val_collate
@@ -311,7 +314,8 @@ def test_model(cfg, load_model_path, use_cuda, args):
             ShortSideScale(
                 size=256
             ),
-            CenterCrop(224)
+            # CenterCrop(224)
+            Resize((224, 224))
         ]
     )
     
@@ -390,6 +394,119 @@ def test_model(cfg, load_model_path, use_cuda, args):
         print('Test Accuracy of class {}: {:.4f}'.format(i, class_correct[i] / class_total[i]), flush=True)
 
     return act_acc
+
+def test_model_with_confusion_matrix(cfg, load_model_path, use_cuda, args):
+    print("Testing model")
+    transform_test = Compose(
+        [
+            Normalize([0.45, 0.45, 0.45], [0.225, 0.225, 0.225]),
+            ShortSideScale(size=256),
+            CenterCrop(224)
+        ]
+    )
+    
+    test_data_gen = omniDataLoader(cfg, 'test', 1.0, transform=transform_test, flag=False)
+    test_dataloader = DataLoader(test_data_gen, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, drop_last=False, collate_fn=val_collate)
+    
+    print("Number of testing samples : " + str(len(test_data_gen)))
+    
+    num_views = 4
+    model = build_model(args.model_version, num_views, cfg.num_actions)
+
+    # Load the model
+    list_of_files = os.listdir(load_model_path)
+    for file in list_of_files:
+        if file.endswith('.pth'):
+            model_path = os.path.join(load_model_path, file)
+            break
+
+    pretrained_weights = torch.load(model_path)['state_dict']
+    model.load_state_dict(pretrained_weights, strict=True)
+
+    num_gpus = len(args.gpu.split(','))
+    if num_gpus > 1:
+        model = torch.nn.DataParallel(model)
+    model.cuda()
+
+    model.eval()
+
+    all_preds = []
+    all_labels = []
+
+    act_acc = []
+    sub_acc = []
+    class_correct = list(0. for i in range(cfg.num_actions))
+    class_total = list(0. for i in range(cfg.num_actions))
+
+    for i, (clips, labels, action_targets, keys) in enumerate(tqdm(test_dataloader)):
+        clips = Variable(clips.type(torch.FloatTensor))
+        labels =  Variable(labels.type(torch.FloatTensor))
+        action_targets = Variable(action_targets.type(torch.FloatTensor))
+
+        assert len(clips) == len(labels)
+        
+        with torch.no_grad():
+            if use_cuda:
+                clips = clips.cuda()
+                labels = labels.cuda()
+                action_targets = action_targets.cuda()
+
+            output_subjects, output_actions, features, act_features, _, _ = model(clips)
+            output_subjects = torch.argmax(output_subjects, dim=1)
+            output_actions = torch.argmax(output_actions, dim=1)
+            acc = torch.sum(output_actions == action_targets)
+            act_acc.append(acc)
+            
+            acc = torch.sum(output_subjects == labels)
+            sub_acc.append(acc)
+
+            for j in range(len(action_targets)):
+                label = int(action_targets[j].item())
+                pred = int(output_actions[j].item())
+                if label == pred:
+                    class_correct[label] += 1
+                class_total[label] += 1
+
+            all_preds.extend(output_actions.cpu().numpy())
+            all_labels.extend(action_targets.cpu().numpy())
+
+    sub = torch.stack([acc for acc in sub_acc])
+    sub_acc = torch.sum(sub) / (len(sub) * args.batch_size)
+    act = torch.stack([acc for acc in act_acc])
+    act_acc = torch.sum(act) / (len(act) * args.batch_size)
+    print('Test Action Accuracy: %.4f' % act_acc, flush=True)
+    print('Test View Accuracy: %.4f' % sub_acc, flush=True)
+
+    # print all class's accuracy
+    for i in range(cfg.num_actions):
+        print('Test Accuracy of class {}: {:.4f}'.format(i, class_correct[i] / class_total[i]), flush=True)
+
+    action_list_y = ["pickup 1", "pickup 2", "drop", "walk", "sit", "stand up", "donning", "doffing", "throw", "carry"]
+    action_list_x = ["A{}".format(str(i).zfill(3)) for i in range(1, 11)]
+
+    # Compute confusion matrix and save as image
+    cm = confusion_matrix(all_labels, all_preds, labels=list(range(cfg.num_actions)))
+
+    # Adjust figure size to fit axis labels
+    plt.figure(figsize=(10, 8))  # Adjust width and height as needed
+
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=action_list_y)
+    disp.plot(cmap=plt.cm.Blues, ax=plt.gca())  # Use the current axis for plotting
+
+    # Set custom x-axis labels
+    plt.gca().set_xticks(range(len(action_list_y)))
+    plt.gca().set_xticklabels(action_list_y, rotation=45, ha="right")
+
+    # Set custom y-axis labels
+    plt.gca().set_yticks(range(len(action_list_y)))
+    plt.gca().set_yticklabels(action_list_y)
+
+    plt.title('Confusion Matrix_{}'.format(args.load_model))
+    plt.tight_layout()  # Automatically adjust layout to fit labels
+    plt.savefig('confusion_matrix_{}.png'.format(args.load_model))
+    plt.close()
+
+    return cm
     
 
 def train_model(cfg, run_id, save_dir, use_cuda, args, writer):
