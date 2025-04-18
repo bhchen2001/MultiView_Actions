@@ -16,14 +16,12 @@ from torchvision.transforms import (
     PILToTensor
 )
 
-def create_master_dataset_csv_S003():
+def create_master_dataset_csv(filename, viewpoint_num):
     dataset_base_dir = '/mnt/disk1/bhchen/action_recognition/dataset/lab639_fisheye'
     anno_base_dir = '/home/bhchen/action_recognition/dataset/lab639_fisheye'
-    frame_anno = anno_base_dir + '/avi_start_end_S003.csv'
+    frame_anno = anno_base_dir + '/avi_start_end_{}.csv'.format(filename)
 
-    master_csv_dir = anno_base_dir + '/fisheye639_S003_master.csv'
-
-    viewpoint_num = 4
+    master_csv_dir = anno_base_dir + '/fisheye639_{}_master.csv'.format(filename)
 
     # create a csv file with following columns: video_id, subject, action, camera, repetition, setup
     # format in anno_base: SxxxPxxxRxxxAxxx
@@ -132,6 +130,62 @@ def create_fisheye_dataset_csv():
             for row in master_df_rows:
                 f.write(','.join(row) + '\n')
     return
+
+def filter_dataset(filename):
+    dataset_base_dir = '/mnt/disk1/bhchen/action_recognition/dataset/lab639_fisheye'
+    anno_base_dir = '/home/bhchen/action_recognition/dataset/lab639_fisheye'
+
+    master_csv_dir = anno_base_dir + '/fisheye639_{}_master_all.csv'.format(filename)
+
+    # only keeps the rows with setup == 003 from csv file with the following conditions: 
+    # repetition == 1, 3, 9, 11, 17, 19, 25, 27, 33, 35, 37, 39, 45, 47, 53, 55, 61, 63, 69, 71
+    # action == 1, 2, 3, 5, 6, 7, 8, 9, 10
+
+    # action == 004
+    # repetition == 1, 4, 7, 10, 13, 34, 37, 40, 43, 46
+
+    master_csv_new_dir = anno_base_dir + '/fisheye639_{}_master_filtered.csv'.format(filename)
+    master_anno = pd.read_csv(master_csv_dir)
+    # print(master_anno)
+    print("master_anno shape: ", master_anno.shape)
+    # filter the rows with setup == 003
+    S003_keep = master_anno[master_anno['setup'] == 3]
+    print("S003_keep shape: ", S003_keep.shape)
+
+    # filter action == 1, 2, 3, 5, 6, 7, 8, 9, 10
+    not_A004_keep = S003_keep[~S003_keep['action'].isin([4])]
+    # filter repetition == 1, 3, 9, 11, 17, 19, 25, 27, 33, 35, 37, 39, 45, 47, 53, 55, 61, 63, 69, 71
+    not_A004_keep = not_A004_keep[not_A004_keep['repetition'].isin([1, 9, 17, 25, 33, 39, 47, 55, 63, 71])]
+    print("not_A004_keep shape: ", not_A004_keep.shape)
+
+    A004_keep = S003_keep[S003_keep['action'] == 4]
+    # filter repetition == 1, 4, 7, 10, 13, 34, 37, 40, 43, 46
+    A004_keep = A004_keep[A004_keep['repetition'].isin([1, 4, 7, 10, 13, 34, 37, 40, 43, 46])]
+    print("A004_keep shape: ", A004_keep.shape)
+
+    # other rows
+    others = master_anno[master_anno['setup'] != 3]
+    print("others shape: ", others.shape)
+
+    # combine the rows
+    filtered_master_anno = pd.concat([not_A004_keep, A004_keep, others], ignore_index=True)
+
+    # convert numeric columns to 3-digits format (17 --> 017)
+    filtered_master_anno['subject'] = filtered_master_anno['subject'].apply(lambda x: '{0:0>3}'.format(x))
+    filtered_master_anno['action'] = filtered_master_anno['action'].apply(lambda x: '{0:0>3}'.format(x))
+    filtered_master_anno['camera'] = filtered_master_anno['camera'].apply(lambda x: '{0:0>3}'.format(x))
+    filtered_master_anno['repetition'] = filtered_master_anno['repetition'].apply(lambda x: '{0:0>3}'.format(x))
+    filtered_master_anno['setup'] = filtered_master_anno['setup'].apply(lambda x: '{0:0>3}'.format(x))
+
+    # sort the rows with the video_id
+    filtered_master_anno.sort_values(by=['video_id'], inplace=True)
+    # write the rows to the csv file
+    with open(master_csv_new_dir, 'w') as f:
+        f.write('video_id,subject,action,camera,repetition,setup\n')
+        for i, row in filtered_master_anno.iterrows():
+            f.write(','.join(row) + '\n')
+    return
+    
 
 def create_sampled_jpg_from_avi():
     base_dir = '/mnt/disk1/bhchen/action_recognition/dataset/lab639_fisheye'
@@ -261,30 +315,31 @@ def create_h5py_old():
     return
 
 def create_h5py(select_setup, sampled_frames_num):
-    dataset_base_dir = '/mnt/disk1/bhchen/action_recognition/dataset/lab639_fisheye'
+    dataset_base_dir_S003 = '/mnt/disk1/bhchen/action_recognition/dataset/lab639_fisheye'
+    dataset_base_dir_other = '/home/bhchen/action_recognition/dataset/lab639_fisheye/videos'
     dataset_csv_dir = '/home/bhchen/action_recognition/dataset/lab639_fisheye'
-    dataset_save_dir = '/mnt/disk1/bhchen/action_recognition/dataset/lab639_fisheye/processed_data_S003'
+    dataset_save_dir = '/home/bhchen/action_recognition/dataset/lab639_fisheye/processed_data_{}'.format(select_setup)
 
     # select the setup according to user
-    master_anno = pd.read_csv(dataset_csv_dir + '/fisheye639_S003_master.csv')
-    if select_setup != 'all':
-        master_anno = master_anno[master_anno['video_id'].str.contains(select_setup)]
+    master_anno = pd.read_csv(dataset_csv_dir + '/fisheye639_{}_master.csv'.format(select_setup))
+    # if select_setup != 'all':
+    #     master_anno = master_anno[master_anno['video_id'].str.contains(select_setup)]
 
-    start_end_anno = pd.read_csv(dataset_csv_dir + '/avi_start_end_S003.csv')
-    if select_setup != 'all':
-        start_end_anno = start_end_anno[start_end_anno['data'].str.contains(select_setup)]
+    start_end_anno = pd.read_csv(dataset_csv_dir + '/avi_start_end_{}.csv'.format(select_setup))
+    # if select_setup != 'all':
+    #     start_end_anno = start_end_anno[start_end_anno['data'].str.contains(select_setup)]
 
     resize = Resize([270, 480])
 
-    flag = False
+    # flag = False
 
     for i, video_id in enumerate(master_anno['video_id']):
 
-        if flag == False and video_id == 'S003C004P003R011A005':
-            flag = True
-        elif flag == False:
-            print("Skip : {}".format(video_id))
-            continue
+        # if flag == False and video_id == 'S003C004P003R011A005':
+        #     flag = True
+        # elif flag == False:
+        #     print("Skip : {}".format(video_id))
+        #     continue
 
         data_name = video_id[:4] + video_id[8:]
         if data_name not in start_end_anno['data'].values:
@@ -299,6 +354,7 @@ def create_h5py(select_setup, sampled_frames_num):
         frame_indices = np.linspace(start_frame, end_frame, num=sampled_frames_num, dtype=int)
         sampled_frames = []
 
+        setup = video_id[:4]
         action_class = video_id[-4:]
         repetition = int(video_id[-7:-4])
 
@@ -309,12 +365,27 @@ def create_h5py(select_setup, sampled_frames_num):
         else:
             action_dir = action_class
 
-        if action_class != 'A004':
-            video_folder = video_id[:12] + 'R' + str((repetition - 1) // 4 * 4 + 1).zfill(3) + action_dir
-        elif action_class == 'A004':
-            video_folder = video_id[:12] + 'R' + str((repetition - 1) // 3 * 3 + 1).zfill(3) + action_dir
+        # if action_class != 'A004':
+        #     video_folder = video_id[:12] + 'R' + str((repetition - 1) // 4 * 4 + 1).zfill(3) + action_dir
+        # elif action_class == 'A004':
+        #     video_folder = video_id[:12] + 'R' + str((repetition - 1) // 3 * 3 + 1).zfill(3) + action_dir
+
+        video_folder = ""
+
+        r_select = repetition
+        while r_select > 0:
+            video_folder = video_id[:12] + 'R' + str(r_select).zfill(3) + action_dir
+            if os.path.exists(os.path.join(dataset_base_dir_S003, action_dir, video_folder)) or os.path.exists(os.path.join(dataset_base_dir_other, action_dir, video_folder)):
+                break
+            r_select -= 1
+
+        if r_select == 0 or video_folder == "":
+            raise Exception('No video folder found: {}, {}'.format(video_id, video_folder))
         
-        jpg_path = os.path.join(dataset_base_dir, action_dir, video_folder)
+        if setup == 'S003':
+            jpg_path = os.path.join(dataset_base_dir_S003, action_dir, video_folder)
+        else:
+            jpg_path = os.path.join(dataset_base_dir_other, action_dir, video_folder)
 
         print("Video_id: {}, jpg_path: {}".format(video_id, jpg_path))
 
@@ -346,7 +417,8 @@ def create_h5py(select_setup, sampled_frames_num):
 
 
 if __name__ == '__main__':
-    # create_master_dataset_csv_S003()
+    # create_master_dataset_csv("S008", 4)
+    # filter_dataset("S003_S007")
     # create_fisheye_dataset_csv()
     # create_sampled_jpg(16)
-    create_h5py('S003', 16)
+    create_h5py('S008', 16)
