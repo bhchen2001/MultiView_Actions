@@ -1,0 +1,48 @@
+Testing model
+['001', '002', '003', '004', '005', '006', '007', '008', '009', '010']
+Number of testing samples : 800
+Test Action Accuracy: 0.7425
+Test View Accuracy: 1.0000
+Test Accuracy of class 0: 0.3125
+Test Accuracy of class 1: 0.8625
+Test Accuracy of class 2: 1.0000
+Test Accuracy of class 3: 1.0000
+Test Accuracy of class 4: 0.9875
+Test Accuracy of class 5: 0.8750
+Test Accuracy of class 6: 0.4750
+Test Accuracy of class 7: 0.7375
+Test Accuracy of class 8: 0.2625
+Test Accuracy of class 9: 0.9125
+Fold 0 done
+Testing model
+['001', '002', '003', '004', '005', '006', '007', '008', '009', '010']
+Number of testing samples : 780
+Test Action Accuracy: 0.9128
+Test View Accuracy: 1.0000
+Test Accuracy of class 0: 0.6250
+Test Accuracy of class 1: 0.8875
+Test Accuracy of class 2: 0.9333
+Test Accuracy of class 3: 1.0000
+Test Accuracy of class 4: 0.8875
+Test Accuracy of class 5: 0.9375
+Test Accuracy of class 6: 1.0000
+Test Accuracy of class 7: 1.0000
+Test Accuracy of class 8: 1.0000
+Test Accuracy of class 9: 0.8625
+Fold 1 done
+Testing model
+['001', '002', '003', '004', '005', '006', '007', '008', '009', '010']
+Number of testing samples : 800
+Test Action Accuracy: 0.8900
+Test View Accuracy: 1.0000
+Test Accuracy of class 0: 0.8250
+Test Accuracy of class 1: 0.3750
+Test Accuracy of class 2: 0.9000
+Test Accuracy of class 3: 1.0000
+Test Accuracy of class 4: 0.9625
+Test Accuracy of class 5: 0.9250
+Test Accuracy of class 6: 1.0000
+Test Accuracy of class 7: 0.9500
+Test Accuracy of class 8: 1.0000
+Test Accuracy of class 9: 0.9625
+Fold 2 done
